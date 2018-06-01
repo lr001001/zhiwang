@@ -24,7 +24,7 @@
         return $data;
     }
 
-    function createexcel($data){
+    function createexcel($data1 , $data2){
         error_reporting(0);
         $name = '数据抓取_'.date('Y-m-d').'.xls';
         include_once './PHPExcel/Classes/PHPExcel.php';
@@ -45,7 +45,9 @@
         $objPHPExcel->setActiveSheetIndex(0)
             ->setCellValue('A1', 'showName')
             ->setCellValue('B1', '年份')
-            ->setCellValue('C1', '数量');
+            ->setCellValue('C1', '数量')
+            ->setCellValue('E1', '学科分类')
+            ->setCellValue('F1', '数量');
         //加粗居中
         $objPHPExcel->getActiveSheet()->getStyle('A1:C1')->applyFromArray(
             array(
@@ -57,12 +59,18 @@
                 )
             )
         );
-        if ($data){
-            foreach ($data as $k => $v){
+        if ($data1 && $data2){
+            foreach ($data1 as $k => $v){
                 $objPHPExcel->setActiveSheetIndex(0)
                     ->setCellValue('A'.($k+2), $v['showName'])
                     ->setCellValue('B'.($k+2), $v['value'])
                     ->setCellValue('C'.($k+2), $v['count']);
+            }
+
+            foreach ($data2 as $k => $v){
+                $objPHPExcel->setActiveSheetIndex(0)
+                    ->setCellValue('E'.($k+2), $v['showName'])
+                    ->setCellValue('F'.($k+2), $v['count']);
             }
         }
     // Rename worksheet
@@ -98,14 +106,28 @@
     $param['isHit'] = '';
     $param['startYear'] = '';
     $param['endYear'] = '';
-    $param['limit'] = '14';
+    $param['limit'] = '100';
     $param['single'] = 'true';
 
     $url = 'http://www.wanfangdata.com.cn/search/navigation.do';
 
-    $result = request_post($url , $param);
-    $data = json_decode($result , true);
-    $data = $data['facetTree'];
-    createexcel($data);
+    $result1 = request_post($url , $param);
+    $data1 = json_decode($result1 , true);
+    $data1 = $data1['facetTree'];
+
+    $param2['searchType'] = 'all';
+    //$param['searchWord'] = '(%E4%BD%9C%E8%80%85%E5%8D%95%E4%BD%8D%3A(%22%E5%AE%89%E9%98%B3%22)*%E4%BD%9C%E8%80%85%E5%8D%95%E4%BD%8D%3A(%22%E5%8D%97%E4%BA%AC%22))';
+    $param2['searchWord'] = $_POST['searchWord'];
+    $param2['facetField'] = '$subject_classcode_level';
+    $param2['isHit'] = '';
+    $param2['startYear'] = '';
+    $param2['endYear'] = '';
+    $param2['limit'] = '100';
+    $param2['single'] = 'true';
+    $result2 = request_post($url , $param2);
+    $data2 = json_decode($result2 , true);
+    $data2 = $data2['facetTree'];
+    //var_dump($data2);
+    createexcel($data1 , $data2);
     //var_dump($data);
     die;
